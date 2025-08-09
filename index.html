@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saptajit Dutta - Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Playfair+Display:wght@700;900&family=Roboto+Mono:wght@400;700&family=Source+Code+Pro:wght@400;700&family=Space+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cursor-size: 30px;
+            --cursor-border: 2px;
+        }
+        body {
+            background-color: #0a0a0a;
+            color: #e2e8f0;
+            overflow-x: hidden;
+            font-family: 'Lato', sans-serif;
+            cursor: none; /* Hide default cursor */
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Playfair Display', serif;
+        }
+        #custom-cursor {
+            position: fixed;
+            width: var(--cursor-size);
+            height: var(--cursor-size);
+            border: var(--cursor-border) solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 9999;
+            transition: width 0.3s ease, height 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, transform 0.1s ease-out;
+        }
+        @media (hover: none) {
+            #custom-cursor {
+                display: none;
+            }
+            body {
+                cursor: auto;
+            }
+        }
+        #custom-cursor.hover {
+            width: 60px;
+            height: 60px;
+            background-color: rgba(196, 181, 253, 0.1);
+            border-color: rgba(196, 181, 253, 0.5);
+        }
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .section {
+            min-height: 100vh;
+            padding: 8rem 1rem;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .card {
+            position: relative; 
+            background-color: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            z-index: 1;
+            overflow: hidden;
+        }
+        .card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: conic-gradient(
+                from 0deg at 50% 50%,
+                transparent 0%,
+                transparent 70%,
+                rgba(196, 181, 253, 0.2),
+                rgba(196, 181, 253, 0.05),
+                transparent 100%
+            );
+            animation: rotate-beam 6s linear infinite;
+        }
+        @keyframes rotate-beam {
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
+        }
+        .card-inner {
+            background-color: rgba(17, 17, 17, 0.85);
+            backdrop-filter: blur(12px);
+            width: 100%;
+            height: 100%;
+            border-radius: inherit;
+            transition: background-color 0.4s ease;
+        }
+        .card:hover .card-inner {
+            background-color: rgba(17, 17, 17, 0.7);
+        }
+
+        .nav-container {
+            position: relative;
+        }
+        #nav-bubble {
+            position: absolute;
+            top: -10px;
+            height: calc(100% + 20px);
+            background: radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.25), rgba(196, 181, 253, 0.1) 90%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.1), 0 0 15px rgba(196, 181, 253, 0.1);
+            border-radius: 9999px;
+            z-index: -1;
+            transition: left 0.4s cubic-bezier(0.23, 1, 0.32, 1), width 0.4s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.3s ease;
+            opacity: 0;
+        }
+        .nav-link {
+            position: relative;
+            transition: color 0.3s ease;
+            font-family: 'Lato', sans-serif;
+            padding: 10px 15px;
+            z-index: 1;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #e9d5ff;
+        }
+        .gemini-button:hover {
+            background-color: #7c3aed;
+            transform: scale(1.05);
+        }
+        .loader {
+            border: 4px solid #333;
+            border-top: 4px solid #8b5cf6;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .timeline {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .timeline::before, .timeline::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            background-color: rgba(255, 255, 255, 0.15);
+            top: 0;
+            bottom: 0;
+            z-index: 0;
+        }
+        .timeline::before {
+            left: 10px;
+        }
+        .timeline::after {
+            left: 18px;
+        }
+        .timeline-train {
+            position: absolute;
+            left: 14px;
+            width: 15px;
+            height: 40px;
+            background: #c4b5fd;
+            border-radius: 50px;
+            transform: translateX(-50%);
+            z-index: 2;
+            box-shadow: 0 0 15px #c4b5fd, 0 0 25px #c4b5fd, 0 0 35px #c4b5fd;
+            transition: top 0.2s linear;
+        }
+        .timeline-container {
+            padding-left: 40px;
+            position: relative;
+            background-color: inherit;
+            width: 100%;
+            margin-bottom: 4rem;
+        }
+        .timeline-container:last-child {
+            margin-bottom: 0;
+        }
+        .timeline-container::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            left: 4px;
+            background-color: #0a0a0a;
+            border: 3px solid #8b5cf6;
+            top: 28px;
+            border-radius: 50%;
+            z-index: 1;
+        }
+        .timeline-content {
+            position: relative;
+            border-radius: 8px;
+            transition: transform 0.4s ease;
+        }
+        .timeline-content:hover {
+            transform: scale(1.05);
+            z-index: 45;
+        }
+        @media (min-width: 768px) {
+            .timeline::before {
+                left: calc(50% - 4px);
+            }
+            .timeline::after {
+                left: calc(50% + 4px);
+            }
+            .timeline-train {
+                left: 50%;
+            }
+            .timeline-container {
+                padding: 10px 40px;
+                width: 50%;
+                margin-bottom: 8rem;
+            }
+            .timeline-container.md\:left { left: 0; padding-left: 0; padding-right: 40px; }
+            .timeline-container.md\:right { left: 50%; padding-left: 40px; padding-right: 0;}
+            .timeline-container::after {
+                left: auto;
+                right: -10px;
+            }
+            .timeline-container.md\:right::after {
+                left: -10px;
+            }
+            .timeline-content:hover {
+                transform: scale(1.2);
+            }
+        }
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .fade-in-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .vanishing-text {
+            transition: opacity 0.5s ease-out;
+        }
+        #name-anim-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1em;
+            background-color: #e2e8f0;
+            animation: blink 1s infinite;
+            vertical-align: bottom;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        .tubelight-effect {
+            animation: flicker 4s linear infinite;
+        }
+        @keyframes flicker {
+            0%, 18%, 22%, 25%, 53%, 57%, 100% {
+                text-shadow:
+                    0 0 2px #fff,
+                    0 0 5px #fff,
+                    0 0 10px #fff,
+                    0 0 20px #fff,
+                    0 0 40px #fff,
+                    0 0 45px #fff,
+                    0 0 50px #fff,
+                    0 0 75px #fff;
+                opacity: 1;
+            }
+            20%, 24%, 55% {
+                text-shadow: none;
+                opacity: 0.5;
+            }
+        }
+        #vector-field {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+        .vector-star {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.2);
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+        #certificate-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        #certificate-modal.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+        #certificate-modal-content {
+            max-width: 90vw;
+            max-height: 90vh;
+        }
+        #modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            color: white;
+            font-size: 2rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-900">
+
+    <div id="custom-cursor"></div>
+    <canvas id="bg-canvas"></canvas>
+    <div id="vector-field"></div>
+
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 z-50 p-4 bg-black/30 backdrop-blur-md">
+        <nav class="container mx-auto flex justify-between items-center">
+            <a href="#home" class="text-3xl font-bold tracking-tighter" style="font-family: 'Playfair Display', serif;">SD.</a>
+            <div class="hidden md:flex items-center space-x-2 nav-container">
+                <div id="nav-bubble"></div>
+                <a href="#about" class="nav-link">About</a>
+                <a href="#experience" class="nav-link">Experience</a>
+                <a href="#education" class="nav-link">Education</a>
+                <a href="#skills" class="nav-link">Skills</a>
+                <a href="#certifications" class="nav-link">Certifications</a>
+                <a href="#ai-assistant" class="nav-link">AI Assistant</a>
+                <a href="#contact" class="nav-link">Contact</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden text-white focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden mt-4 bg-gray-900 p-4 rounded-lg">
+             <a href="#about" class="block py-2 px-4 text-sm hover:bg-gray-800 rounded">About</a>
+             <a href="#experience" class="block py-2 px-4 text-sm hover:bg-gray-800 rounded">Experience</a>
+             <a href="#education" class="block py-2 px-4 text-sm hover:bg-gray-800 rounded">Education</a>
+             <a href="#skills" class="block py-2 px-4 text-sm hover:bg-gray-800 rounded">Skills</a>
+             <a href="#certifications" class="block py-2 px-4 text-sm hover:bg-gray-800 rounded">Certifications</a>
+             <a href="#ai-assistant" class="block py-2 px-4 text-sm hover:bg-gray-800 rounded">AI Assistant</a>
+             <a href="#contact" class="block py-2 px-4 text-sm hover:bg-gray-800 rounded">Contact</a>
+        </div>
+    </header>
+
+    <main>
+        <!-- Home -->
+        <section id="home" class="section text-center">
+            <div class="max-w-4xl mx-auto vanishing-text">
+                <h1 id="name-anim" class="text-6xl md:text-8xl font-black mb-4 tracking-tight" style="min-height: 1.2em;"></h1>
+                <p id="subtitle-anim" class="text-xl md:text-2xl text-gray-300 mb-8 font-serif tubelight-effect"></p>
+                <a href="#about" class="bg-white text-black font-bold py-3 px-8 rounded-full hover:bg-gray-200 transition duration-300 transform hover:scale-105">
+                    Explore My Profile
+                </a>
+            </div>
+        </section>
+
+        <!-- About -->
+        <section id="about" class="section fade-in-section">
+            <div class="container mx-auto px-4">
+                <h2 class="text-5xl font-bold text-center mb-16 vanishing-text">About Me</h2>
+                <div class="card p-1 rounded-lg max-w-5xl mx-auto">
+                    <div class="card-inner p-6 md:p-10 rounded-lg">
+                        <div class="grid md:grid-cols-3 gap-8 items-center">
+                            <div class="md:col-span-1 flex justify-center">
+                                <div class="w-48 h-48 rounded-full bg-gray-800 border-2 border-purple-400 flex items-center justify-center">
+                                    <img src="IMG_7002.JPG" alt="Saptajit Dutta Profile Picture" class="rounded-full w-full h-full object-cover" id="profile-pic">
+                                </div>
+                            </div>
+                            <div class="md:col-span-2 vanishing-text">
+                                <p class="text-lg text-gray-300 leading-relaxed">
+                                    I am a passionate and driven statistician with a Master's degree from Banaras Hindu University and a Bachelor's from Maulana Azad College. My academic and professional journey has provided me with a robust foundation in data analysis, statistical modeling, and machine learning using tools like Python and R. I thrive on transforming complex datasets into actionable insights and am actively seeking a challenging role where I can apply my skills to solve real-world problems.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Experience -->
+        <section id="experience" class="section fade-in-section">
+            <div class="container mx-auto px-4">
+                <h2 class="text-5xl font-bold text-center mb-16 vanishing-text">Experience</h2>
+                <div class="timeline">
+                    <div id="experience-train" class="timeline-train"></div>
+                    <div class="timeline-container md:left vanishing-text">
+                        <div class="timeline-content">
+                           <div class="card p-1 rounded-lg">
+                               <div class="card-inner p-5">
+                                    <h3 class="text-2xl font-bold">Subject Matter Expert</h3>
+                                    <p class="text-gray-400 mb-2">Chegg India</p>
+                                    <p class="text-sm text-purple-400">Nov 2023 - Present</p>
+                                </div>
+                           </div>
+                        </div>
+                    </div>
+                    <div class="timeline-container md:right vanishing-text">
+                        <div class="timeline-content">
+                            <div class="card p-1 rounded-lg">
+                                <div class="card-inner p-5">
+                                    <h3 class="text-2xl font-bold">Online Tutor</h3>
+                                    <p class="text-gray-400 mb-2">Transtutors</p>
+                                    <p class="text-sm text-purple-400">Dec 2024 - Present</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-container md:left vanishing-text">
+                        <div class="timeline-content">
+                            <div class="card p-1 rounded-lg">
+                                <div class="card-inner p-5">
+                                    <h3 class="text-2xl font-bold">e-Student Member</h3>
+                                    <p class="text-gray-400 mb-2">Royal Statistical Society</p>
+                                    <p class="text-sm text-purple-400">Jun 2025 - Present</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Education -->
+        <section id="education" class="section fade-in-section">
+            <div class="container mx-auto px-4">
+                <h2 class="text-5xl font-bold text-center mb-16 vanishing-text">Education</h2>
+                 <div class="timeline">
+                    <div id="education-train" class="timeline-train"></div>
+                    <div class="timeline-container md:left vanishing-text">
+                        <div class="timeline-content">
+                            <div class="card p-1 rounded-lg">
+                                <div class="card-inner p-5">
+                                    <h3 class="text-2xl font-bold">Master of Science, Statistics</h3>
+                                    <p class="text-gray-400">Banaras Hindu University</p>
+                                    <p class="text-sm text-purple-400">2024 - 2026</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-container md:right vanishing-text">
+                        <div class="timeline-content">
+                            <div class="card p-1 rounded-lg">
+                                <div class="card-inner p-5">
+                                    <h3 class="text-2xl font-bold">BSc. (Honours), Statistics</h3>
+                                    <p class="text-gray-400">Maulana Azad College</p>
+                                    <p class="text-sm text-purple-400">2021 - 2024</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-container md:left vanishing-text">
+                        <div class="timeline-content">
+                            <div class="card p-1 rounded-lg">
+                                <div class="card-inner p-5">
+                                    <h3 class="text-2xl font-bold">Higher Secondary (10+2), Science</h3>
+                                    <p class="text-gray-400">The Scottish Church Collegiate School</p>
+                                    <p class="text-sm text-purple-400">2019 - 2021</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="timeline-container md:right vanishing-text">
+                        <div class="timeline-content">
+                            <div class="card p-1 rounded-lg">
+                                <div class="card-inner p-5">
+                                    <h3 class="text-2xl font-bold">Secondary Education</h3>
+                                    <p class="text-gray-400">The Scottish Church Collegiate School</p>
+                                    <p class="text-sm text-purple-400">2009 - 2019</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Skills -->
+        <section id="skills" class="section fade-in-section">
+            <div class="container mx-auto px-4 text-center">
+                <h2 class="text-5xl font-bold mb-12 vanishing-text">Technical Skills</h2>
+                <div id="skills-list" class="max-w-4xl mx-auto flex flex-wrap justify-center gap-4 vanishing-text">
+                    <span class="bg-gray-800 text-white px-4 py-2 rounded-md text-lg transition-transform transform hover:scale-110 flex items-center gap-2">
+                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M16.273 8.333c-1.22-.02-2.81.52-3.93 1.25l-.29.18-1.3-1.3c.32-.23.66-.44.99-.63.63-.37 1.29-.7 2.01-.93.7-.23 1.44-.36 2.18-.36h.25v3.16l-.01-.37zm-8.946 7.334c1.22.02 2.81-.52 3.93-1.25l.29-.18 1.3 1.3c-.32.23-.66.44-.99.63-.63.37-1.29.7-2.01.93-.7.23-1.44.36-2.18.36h-.25v-3.16l.01.37zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm.667 15.313c-1.32.81-2.81 1.26-4.25 1.26-1.29 0-2.5-.39-3.56-1.12.27.03.55.05.82.05.78 0 1.58-.19 2.31-.56.79-.39 1.49-.93 2.06-1.59.57-.66 1.02-1.43 1.33-2.29.3-.85.45-1.76.45-2.71s-.15-1.86-.45-2.71c-.3-.86-.76-1.63-1.33-2.29-.57-.66-1.27-1.2-2.06-1.59-.73-.37-1.53-.56-2.31-.56-.27 0-.55.02-.82.05 1.06-.73 2.27-1.12 3.56-1.12 1.44 0 2.93.45 4.25 1.26.55.33.91.73 1.36 1.36.44.62.67 1.36.67 2.16s-.23 1.54-.67 2.16c-.45.63-.81 1.03-1.36 1.36z"/></svg>
+                        Python
+                    </span>
+                    <span class="bg-gray-800 text-white px-4 py-2 rounded-md text-lg transition-transform transform hover:scale-110 flex items-center gap-2">
+                         <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm0 1.5C7.306 3.5 3.5 7.306 3.5 12c0 4.694 3.806 8.5 8.5 8.5s8.5-3.806 8.5-8.5c0-4.694-3.806-8.5-8.5-8.5zm4.838 5.474c.23.13.396.34.48.595.085.254.085.52-.001.774-.086.254-.256.46-.486.602-.23.142-.5.195-.77.155-.66.69-1.42 1.25-2.25 1.66-.4.19-.82.34-1.25.44-.43.1-.87.16-1.32.16-.45 0-.89-.05-1.32-.16-.43-.1-.85-.25-1.25-.44-.83-.4-1.59-.97-2.25-1.66-.27.04-.54-.013-.77-.155-.23-.142-.4-.348-.486-.602-.086-.254-.085-.52.001-.774.084-.255.25-.465.48-.595.66-.69 1.42-1.25 2.25-1.66.4-.19.82-.34 1.25-.44.43-.1.87-.16 1.32-.16.45 0 .89.05 1.32.16.43.1.85.25 1.25.44.83.4 1.59.97 2.25 1.66z"/></svg>
+                        R
+                    </span>
+                    <span class="bg-gray-800 text-white px-4 py-2 rounded-md text-lg transition-transform transform hover:scale-110 flex items-center gap-2">
+                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14H7v-4h3v4zm0-6H7V7h3v4zm6 6h-3v-4h3v4zm0-6h-3V7h3v4z"/></svg>
+                        SQL
+                    </span>
+                    <span class="bg-gray-800 text-white px-4 py-2 rounded-md text-lg transition-transform transform hover:scale-110 flex items-center gap-2">
+                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+                        C
+                    </span>
+                     <span class="bg-gray-800 text-white px-4 py-2 rounded-md text-lg transition-transform transform hover:scale-110 flex items-center gap-2">
+                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M20 18l2-2-2-2m-6 4l2-2-2-2m-6 4l2-2-2-2M4 6l2 2-2 2m14-4l-2 2 2 2m-6-4l-2 2 2 2m-6-4l-2 2 2 2"/></svg>
+                        Fortran
+                    </span>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Certifications Section -->
+        <section id="certifications" class="section fade-in-section">
+            <div class="container mx-auto px-4">
+                <h2 class="text-5xl font-bold text-center mb-12 vanishing-text">Certifications</h2>
+                <div class="max-w-6xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Certificate 1 -->
+                    <div class="card p-1 rounded-lg vanishing-text">
+                        <div class="card-inner p-6 rounded-lg flex flex-col justify-between h-full">
+                            <div>
+                                <h3 class="text-xl font-bold mb-2">Data Science Job Simulation</h3>
+                                <p class="text-gray-400 mb-4">Commonwealth Bank</p>
+                            </div>
+                            <button class="view-cert-btn mt-4 bg-purple-600/50 text-purple-200 px-4 py-2 rounded-lg w-full" data-src="https://placehold.co/800x600/0a0a0a/ffffff?text=Certificate+1">View Certificate</button>
+                        </div>
+                    </div>
+                    <!-- Certificate 2 -->
+                    <div class="card p-1 rounded-lg vanishing-text">
+                        <div class="card-inner p-6 rounded-lg flex flex-col justify-between h-full">
+                            <div>
+                                <h3 class="text-xl font-bold mb-2">Natural Language Processing (NLP)</h3>
+                                <p class="text-gray-400 mb-4">Text Mining Tutorial for Beginners</p>
+                            </div>
+                            <button class="view-cert-btn mt-4 bg-purple-600/50 text-purple-200 px-4 py-2 rounded-lg w-full" data-src="https://placehold.co/800x600/0a0a0a/ffffff?text=Certificate+2">View Certificate</button>
+                        </div>
+                    </div>
+                    <!-- Certificate 3 -->
+                    <div class="card p-1 rounded-lg vanishing-text">
+                        <div class="card-inner p-6 rounded-lg flex flex-col justify-between h-full">
+                           <div>
+                             <h3 class="text-xl font-bold mb-2">Data Structures & Algorithms</h3>
+                             <p class="text-gray-400 mb-4">Basics Course</p>
+                           </div>
+                           <button class="view-cert-btn mt-4 bg-purple-600/50 text-purple-200 px-4 py-2 rounded-lg w-full" data-src="https://placehold.co/800x600/0a0a0a/ffffff?text=Certificate+3">View Certificate</button>
+                        </div>
+                    </div>
+                    <!-- Certificate 4 -->
+                    <div class="card p-1 rounded-lg vanishing-text">
+                        <div class="card-inner p-6 rounded-lg flex flex-col justify-between h-full">
+                            <div>
+                                <h3 class="text-xl font-bold mb-2">Introduction to Artificial Intelligence</h3>
+                                <p class="text-gray-400 mb-4">Foundational Concepts</p>
+                            </div>
+                            <button class="view-cert-btn mt-4 bg-purple-600/50 text-purple-200 px-4 py-2 rounded-lg w-full" data-src="https://placehold.co/800x600/0a0a0a/ffffff?text=Certificate+4">View Certificate</button>
+                        </div>
+                    </div>
+                    <!-- Certificate 5 -->
+                    <div class="card p-1 rounded-lg vanishing-text">
+                        <div class="card-inner p-6 rounded-lg flex flex-col justify-between h-full">
+                            <div>
+                                <h3 class="text-xl font-bold mb-2">Data Analytics with Python</h3>
+                                <p class="text-gray-400 mb-4">Practical Application Course</p>
+                            </div>
+                           <button class="view-cert-btn mt-4 bg-purple-600/50 text-purple-200 px-4 py-2 rounded-lg w-full" data-src="https://placehold.co/800x600/0a0a0a/ffffff?text=Certificate+5">View Certificate</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI Assistant -->
+        <section id="ai-assistant" class="section fade-in-section">
+            <div class="container mx-auto px-4 text-center">
+                <h2 class="text-5xl font-bold mb-4 vanishing-text">Ask My AI Twin</h2>
+                <p class="text-gray-400 mb-8 max-w-2xl mx-auto vanishing-text">Have questions about my profile? Ask my AI assistant, powered by Gemini. It's trained on my resume to answer your questions.</p>
+                <div class="card p-1 rounded-lg max-w-2xl mx-auto vanishing-text">
+                    <div class="card-inner p-8 rounded-lg">
+                        <div class="space-y-4">
+                            <input type="text" id="ai-question-input" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="e.g., 'What is your experience with Python?'">
+                            <button id="ask-ai-button" class="gemini-button w-full">Ask Question</button>
+                        </div>
+                        <div id="ai-response-loader" class="loader hidden mx-auto mt-6"></div>
+                        <div id="ai-response" class="mt-6 text-left bg-gray-800/50 p-4 rounded-lg min-h-[50px]">
+                            <p class="text-gray-400">Response will appear here...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact -->
+        <section id="contact" class="section fade-in-section">
+            <div class="container mx-auto px-4 text-center">
+                <h2 class="text-5xl font-bold mb-8 vanishing-text">Get In Touch</h2>
+                <p class="text-lg text-gray-300 mb-8 vanishing-text">I'm actively seeking new opportunities. Let's connect!</p>
+                <div class="flex justify-center items-center space-x-8 vanishing-text">
+                    <a href="mailto:duttasaptajit7@gmail.com" class="text-gray-400 hover:text-purple-400 transition duration-300 transform hover:scale-110">
+                        <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                    </a>
+                    <a href="https://www.linkedin.com/in/saptajit-dutta-616233228" target="_blank" class="text-gray-400 hover:text-purple-400 transition duration-300 transform hover:scale-110">
+                         <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Certificate Modal -->
+    <div id="certificate-modal">
+        <button id="modal-close-btn">&times;</button>
+        <div id="certificate-modal-content">
+            <img src="" alt="Certificate" id="modal-img" class="max-w-full max-h-full">
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- UI & Interaction ---
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+            document.querySelectorAll('#mobile-menu a').forEach(link => {
+                link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
+            });
+
+            // --- Nav Bubble ---
+            const navContainer = document.querySelector('.nav-container');
+            const navBubble = document.getElementById('nav-bubble');
+            const navLinks = document.querySelectorAll('.nav-link');
+
+            function positionBubble(target) {
+                if (!target) {
+                    navBubble.style.opacity = '0';
+                    return;
+                };
+                navBubble.style.left = `${target.offsetLeft}px`;
+                navBubble.style.width = `${target.offsetWidth}px`;
+                navBubble.style.opacity = '1';
+            }
+
+            navLinks.forEach(link => {
+                link.addEventListener('mouseover', () => positionBubble(link));
+            });
+
+            navContainer.addEventListener('mouseleave', () => {
+                 const activeLink = document.querySelector('.nav-link.active');
+                 positionBubble(activeLink);
+            });
+
+            // Active nav link highlighting and bubble positioning
+            const sections = document.querySelectorAll('section');
+            window.addEventListener('scroll', () => {
+                let current = '';
+                let activeLink = null;
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 100) {
+                        current = section.getAttribute('id');
+                    }
+                });
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').includes(current)) {
+                        link.classList.add('active');
+                        activeLink = link;
+                    }
+                });
+                positionBubble(activeLink);
+            }, { passive: true });
+
+
+            // Fade-in animations on scroll
+            const faders = document.querySelectorAll('.fade-in-section');
+            const appearOptions = { threshold: 0.1, rootMargin: "0px 0px -50px 0px" };
+            const appearOnScroll = new IntersectionObserver(function(entries, observer) {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) return;
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                });
+            }, appearOptions);
+            faders.forEach(fader => appearOnScroll.observe(fader));
+
+            // --- Custom Cursor ---
+            const cursor = document.getElementById('custom-cursor');
+            window.addEventListener('mousemove', e => {
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
+            });
+            document.querySelectorAll('a, button, input, #profile-pic, .card').forEach(el => {
+                el.addEventListener('mouseover', () => cursor.classList.add('hover'));
+                el.addEventListener('mouseout', () => cursor.classList.remove('hover'));
+            });
+
+            // --- Vanishing Text on Scroll ---
+            const vanishingElements = document.querySelectorAll('.vanishing-text');
+            window.addEventListener('scroll', () => {
+                vanishingElements.forEach(el => {
+                    const rect = el.getBoundingClientRect();
+                    const viewportHeight = window.innerHeight;
+                    if (rect.top < viewportHeight * 0.4) {
+                        const opacity = Math.max(0, 1 - ((viewportHeight * 0.4 - rect.top) / (viewportHeight * 0.4)));
+                        el.style.opacity = Math.pow(opacity, 1.5);
+                    } else {
+                        el.style.opacity = 1;
+                    }
+                });
+            }, { passive: true });
+
+            // --- Name Typewriter Animation ---
+            const nameEl = document.getElementById('name-anim');
+            const fullName = "Saptajit Dutta";
+            const fonts = ["'Playfair Display', serif", "'Lato', sans-serif", "'Roboto Mono', monospace", "'Source Code Pro', monospace", "'Space Mono', monospace"];
+            let currentText = '';
+            let isDeleting = false;
+            let fontIndex = 0;
+            let typingSpeed = 150;
+            let deletingSpeed = 100;
+
+            function type() {
+                const targetText = fullName;
+                nameEl.style.fontFamily = fonts[fontIndex];
+                fontIndex = (fontIndex + 1) % fonts.length;
+
+                if (isDeleting) {
+                    currentText = targetText.substring(0, currentText.length - 1);
+                } else {
+                    currentText = targetText.substring(0, currentText.length + 1);
+                }
+
+                nameEl.innerHTML = `${currentText}<span id="name-anim-cursor"></span>`;
+
+                if (!isDeleting && currentText === targetText) {
+                    isDeleting = true;
+                    setTimeout(type, 2000);
+                } else if (isDeleting && currentText === '') {
+                    isDeleting = false;
+                    setTimeout(type, 500);
+                } else {
+                    setTimeout(type, isDeleting ? deletingSpeed : typingSpeed);
+                }
+            }
+            type();
+
+            // --- Subtitle Decryption Animation ---
+            const subtitleEl = document.getElementById('subtitle-anim');
+            const finalSubtitle = "Aspiring Data Scientist & AI Enthusiast";
+            const chars = "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;':\",.<>/?~";
+            
+            function decryptSubtitle() {
+                let iteration = 0;
+                
+                subtitleEl.innerText = finalSubtitle; // Set the final text
+                // Scramble it initially
+                subtitleEl.innerText = subtitleEl.innerText.split("").map(() => chars[Math.floor(Math.random() * chars.length)]).join("");
+
+                const interval = setInterval(() => {
+                    subtitleEl.innerText = subtitleEl.innerText.split("")
+                        .map((letter, index) => {
+                            if(index < iteration) {
+                                return finalSubtitle[index];
+                            }
+                            return chars[Math.floor(Math.random() * chars.length)]
+                        })
+                        .join("");
+                    
+                    if(iteration >= finalSubtitle.length){ 
+                        clearInterval(interval);
+                        subtitleEl.innerText = finalSubtitle; 
+                    }
+                    
+                    iteration += 1 / 3;
+                }, 50);
+            }
+            setTimeout(decryptSubtitle, 1000); // Start after a delay
+
+
+            // --- Vector Star Field ---
+            const vectorField = document.getElementById('vector-field');
+            const vectorSVGs = [
+                '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>',
+                '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l2-2-2-2"></path><path d="M8 6l-2 2 2 2"></path><path d="M12 18V6"></path></svg>',
+                '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>',
+                '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l-2 4h4l-2-4z"></path><path d="M4.93 4.93l2.83 2.83"></path><path d="M2 12l4 2v-4l-4 2z"></path><path d="M4.93 19.07l2.83-2.83"></path><path d="M12 22l2-4h-4l2 4z"></path><path d="M19.07 19.07l-2.83-2.83"></path><path d="M22 12l-4-2v4l4-2z"></path><path d="M19.07 4.93l-2.83 2.83"></path></svg>',
+                '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
+                '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18.7 8a6 6 0 0 0-8.4-6.4"></path><path d="M3 12.3v-2.1l4 2 4-2v-2.1l-4 2-4-2z"></path></svg>',
+                '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h3"></path><path d="M10 4h4"></path><path d="M17 4h3v3"></path><path d="M20 10v4"></path><path d="M17 20h-3"></path><path d="M10 20H6"></path><path d="M4 17v-3"></path><path d="M7 10v4h4v-4H7z"></path></svg>'
+            ];
+            const starCount = 150;
+            const docHeight = document.documentElement.scrollHeight;
+
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('vector-star');
+                star.innerHTML = vectorSVGs[Math.floor(Math.random() * vectorSVGs.length)];
+                
+                const size = Math.random() * 30 + 10;
+                star.style.fontSize = `${size}px`;
+                star.style.top = `${Math.random() * docHeight}px`;
+                star.style.left = `${Math.random() * 100}vw`;
+                star.style.transform = `rotate(${Math.random() * 360}deg)`;
+
+                vectorField.appendChild(star);
+            }
+
+            const stars = document.querySelectorAll('.vector-star');
+
+            function animateStar(star) {
+                const shineDuration = Math.random() * 2000 + 1000;
+                const delay = Math.random() * 5000 + 2000;
+                
+                setTimeout(() => {
+                    star.style.transitionDuration = `${shineDuration / 1000}s`;
+                    star.style.opacity = Math.random() * 0.2 + 0.05;
+
+                    setTimeout(() => {
+                        star.style.opacity = 0;
+                        animateStar(star);
+                    }, shineDuration);
+                }, delay);
+            }
+            stars.forEach(animateStar);
+
+
+            // --- Three.js Galaxy Background ---
+            let scene, camera, renderer;
+            const starGroups = [];
+            let mouseX = 0, mouseY = 0;
+
+            function init3D() {
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.z = 300;
+                
+                renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), antialias: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(window.devicePixelRatio);
+
+                const createStars = (count, size, color, opacity) => {
+                    const geometry = new THREE.BufferGeometry();
+                    const positions = new Float32Array(count * 3);
+                    for (let i = 0; i < positions.length; i += 3) {
+                        positions[i] = (Math.random() - 0.5) * 1000;
+                        positions[i + 1] = (Math.random() - 0.5) * 1000;
+                        positions[i + 2] = (Math.random() - 0.5) * 1000;
+                    }
+                    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                    const material = new THREE.PointsMaterial({
+                        size: size,
+                        color: color,
+                        transparent: true,
+                        opacity: opacity,
+                        blending: THREE.AdditiveBlending
+                    });
+                    const points = new THREE.Points(geometry, material);
+                    starGroups.push(points);
+                    scene.add(points);
+                };
+
+                createStars(10000, 0.5, 0xaaaaaa, 0.5); // Fine dust
+                createStars(2000, 1.0, 0xffffff, 0.8); // Normal stars
+                createStars(500, 1.5, 0xffdcb1, 1.0); // Brighter, warmer stars
+
+                window.addEventListener('resize', onWindowResize, false);
+                document.addEventListener('mousemove', onMouseMove, false);
+                animate3D();
+            }
+
+            function animate3D() {
+                requestAnimationFrame(animate3D);
+                camera.position.x += (mouseX - camera.position.x) * 0.005;
+                camera.position.y += (-mouseY - camera.position.y) * 0.005;
+                camera.lookAt(scene.position);
+
+                starGroups[0].rotation.y += 0.0001;
+                starGroups[1].rotation.y += 0.0002;
+                starGroups[2].rotation.y += 0.0003;
+
+                renderer.render(scene, camera);
+            }
+
+            function onWindowResize() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            function onMouseMove(event) {
+                mouseX = (event.clientX - window.innerWidth / 2) / 5;
+                mouseY = (event.clientY - window.innerHeight / 2) / 5;
+            }
+
+            init3D();
+
+            // --- Timeline Train & Focus ---
+            const timelineState = {
+                experience: { paused: false, targetY: 0 },
+                education: { paused: false, targetY: 0 }
+            };
+
+            function setupTimeline(sectionId) {
+                const section = document.getElementById(sectionId);
+                const train = document.getElementById(`${sectionId}-train`);
+                const timeline = section.querySelector('.timeline');
+                const stations = section.querySelectorAll('.timeline-container');
+                if (!stations.length || !train) return;
+
+                const firstStationTop = stations[0].offsetTop;
+                const lastStationTop = stations[stations.length - 1].offsetTop;
+                const trackHeight = lastStationTop - firstStationTop;
+
+                stations.forEach(station => {
+                    const content = station.querySelector('.timeline-content');
+                    station.addEventListener('mouseover', () => {
+                        timelineState[sectionId].paused = true;
+                        const stationTopRelativeToTimeline = station.offsetTop;
+                        timelineState[sectionId].targetY = stationTopRelativeToTimeline + 28 - 20;
+                        train.style.top = `${timelineState[sectionId].targetY}px`;
+                    });
+                    station.addEventListener('mouseout', () => {
+                        timelineState[sectionId].paused = false;
+                    });
+                });
+
+                window.addEventListener('scroll', () => {
+                    if (timelineState[sectionId].paused) return;
+                    
+                    const sectionRect = section.getBoundingClientRect();
+                    const viewportHeight = window.innerHeight;
+
+                    if (sectionRect.bottom < 0 || sectionRect.top > viewportHeight) return;
+
+                    const scrollProgress = (viewportHeight - sectionRect.top) / (sectionRect.height);
+
+                    if (scrollProgress >= 0 && scrollProgress <= 1) {
+                         let newTop = firstStationTop + (scrollProgress * trackHeight);
+                         newTop = Math.max(firstStationTop, Math.min(newTop, lastStationTop)) + 28 - 20;
+                         train.style.top = `${newTop}px`;
+                    }
+                }, { passive: true });
+            }
+
+            setupTimeline('experience');
+            setupTimeline('education');
+            
+            // --- Certificate Modal ---
+            const modal = document.getElementById('certificate-modal');
+            const modalImg = document.getElementById('modal-img');
+            const closeBtn = document.getElementById('modal-close-btn');
+            document.querySelectorAll('.view-cert-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const src = button.getAttribute('data-src');
+                    modalImg.src = src;
+                    modal.classList.add('visible');
+                });
+            });
+            
+            function closeModal() {
+                modal.classList.remove('visible');
+                modalImg.src = "";
+            }
+
+            closeBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+
+
+            // --- Gemini API Integration ---
+            const profileData = {
+                name: "Saptajit Dutta",
+                summary: "An aspiring Data Scientist and AI Enthusiast, currently pursuing a Master of Science in Statistics at Banaras Hindu University. Holds a BSc. in Statistics from Maulana Azad College. Has experience as a Subject Matter Expert at Chegg India and an Online Tutor.",
+                skills: "Python, R, Statistical Modeling, Data Analysis, Probability Theory, Machine Learning, C, Fortran, SQL.",
+                education: "MSc Statistics from Banaras Hindu University (2024-2026); BSc Statistics from Maulana Azad College (2021-2024); Higher Secondary (10+2) in Science from The Scottish Church Collegiate School (2019-2021); Secondary education from The Scottish Church Collegiate School (2009-2019).",
+                certifications: "Commonwealth Bank - Data Science Job Simulation, Natural Language Processing (NLP) and Text Mining Tutorial, Basics of Data Structures and Algorithms, Introduction to Artificial Intelligence, Data Analytics with Python"
+            };
+
+            const callGeminiApi = async (prompt, loader, resultElement) => {
+                loader.classList.remove('hidden');
+                resultElement.innerHTML = '';
+
+                try {
+                    const apiKey = "";
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                    const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) throw new Error(`API Error: ${response.status}`);
+                    const result = await response.json();
+
+                    if (result.candidates && result.candidates[0].content.parts[0].text) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        resultElement.innerHTML = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    } else {
+                        resultElement.innerHTML = '<p class="text-red-400">Sorry, the AI could not generate a response. Please try again.</p>';
+                    }
+                } catch (error) {
+                    console.error("Gemini API Error:", error);
+                    resultElement.innerHTML = `<p class="text-red-400">An error occurred: ${error.message}</p>`;
+                } finally {
+                    loader.classList.add('hidden');
+                }
+            };
+            
+            // AI Assistant Q&A
+            const askAiBtn = document.getElementById('ask-ai-button');
+            const aiQuestionInput = document.getElementById('ai-question-input');
+            const aiResponseLoader = document.getElementById('ai-response-loader');
+            const aiResponseEl = document.getElementById('ai-response');
+            
+            const askAI = () => {
+                const question = aiQuestionInput.value;
+                if (!question.trim()) {
+                    aiResponseEl.innerHTML = '<p class="text-yellow-400">Please enter a question.</p>';
+                    return;
+                }
+                const prompt = `You are an AI assistant for Saptajit Dutta, an aspiring data scientist. Your name is 'SD-AI'. Answer the following question based ONLY on this information: ${JSON.stringify(profileData)}. Be professional, concise, and helpful. If the question is off-topic or cannot be answered with the provided data, politely decline. Question: "${question}"`;
+                callGeminiApi(prompt, aiResponseLoader, aiResponseEl);
+            };
+
+            askAiBtn.addEventListener('click', askAI);
+            aiQuestionInput.addEventListener('keyup', (event) => {
+                if (event.key === 'Enter') {
+                    askAI();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
