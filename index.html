@@ -6,6 +6,7 @@
     <title>Saptajit Dutta - Portfolio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Playfair+Display:wght@700;900&family=Roboto+Mono:wght@400;700&family=Source+Code+Pro:wght@400;700&family=Space+Mono&display=swap" rel="stylesheet">
@@ -142,18 +143,6 @@
             background-color: #7c3aed;
             transform: scale(1.05);
         }
-        .loader {
-            border: 4px solid #333;
-            border-top: 4px solid #8b5cf6;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
         .timeline {
             position: relative;
             max-width: 1200px;
@@ -269,27 +258,6 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0; }
         }
-        .tubelight-effect {
-            animation: flicker 4s linear infinite;
-        }
-        @keyframes flicker {
-            0%, 18%, 22%, 25%, 53%, 57%, 100% {
-                text-shadow:
-                    0 0 2px #fff,
-                    0 0 5px #fff,
-                    0 0 10px #fff,
-                    0 0 20px #fff,
-                    0 0 40px #fff,
-                    0 0 45px #fff,
-                    0 0 50px #fff,
-                    0 0 75px #fff;
-                opacity: 1;
-            }
-            20%, 24%, 55% {
-                text-shadow: none;
-                opacity: 0.5;
-            }
-        }
         #vector-field {
             position: absolute;
             top: 0;
@@ -335,6 +303,28 @@
             color: white;
             font-size: 2rem;
         }
+        #music-toggle {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 50;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #resume-viewer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.7s ease-in-out;
+        }
+        #resume-viewer.visible {
+            max-height: 100vh; /* A large enough value */
+        }
     </style>
 </head>
 <body class="bg-gray-900">
@@ -347,7 +337,11 @@
     <!-- Header -->
     <header class="fixed top-0 left-0 right-0 z-50 p-4 bg-black/30 backdrop-blur-md">
         <nav class="container mx-auto flex justify-between items-center">
-            <a href="#home" class="text-3xl font-bold tracking-tighter" style="font-family: 'Playfair Display', serif;">SD.</a>
+            <a href="#home" class="text-3xl font-bold tracking-tighter">
+                <svg class="w-10 h-10 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z"/>
+                </svg>
+            </a>
             <div class="hidden md:flex items-center space-x-2 nav-container">
                 <div id="nav-bubble"></div>
                 <a href="#about" class="nav-link">About</a>
@@ -355,7 +349,7 @@
                 <a href="#education" class="nav-link">Education</a>
                 <a href="#skills" class="nav-link">Skills</a>
                 <a href="#certifications" class="nav-link">Certifications</a>
-                <a href="#ai-assistant" class="nav-link">AI Assistant</a>
+                <a href="#resume" class="nav-link">Resume</a>
                 <a href="#contact" class="nav-link">Contact</a>
             </div>
             <button id="mobile-menu-button" class="md:hidden text-white focus:outline-none">
@@ -368,7 +362,7 @@
              <a href="#education" class="block py-2 px-4 text-sm hover:bg-gray-800 rounded">Education</a>
              <a href="#skills" class="block py-2 px-4 text-sm hover:bg-gray-800 rounded">Skills</a>
              <a href="#certifications" class="block py-2 px-4 text-sm hover:bg-gray-800 rounded">Certifications</a>
-             <a href="#ai-assistant" class="block py-2 px-4 text-sm hover:bg-gray-800 rounded">AI Assistant</a>
+             <a href="#resume" class="block py-2 px-4 text-sm hover:bg-gray-800 rounded">Resume</a>
              <a href="#contact" class="block py-2 px-4 text-sm hover:bg-gray-800 rounded">Contact</a>
         </div>
     </header>
@@ -378,7 +372,7 @@
         <section id="home" class="section text-center">
             <div class="max-w-4xl mx-auto vanishing-text">
                 <h1 id="name-anim" class="text-6xl md:text-8xl font-black mb-4 tracking-tight" style="min-height: 1.2em;"></h1>
-                <p id="subtitle-anim" class="text-xl md:text-2xl text-gray-300 mb-8 font-serif tubelight-effect"></p>
+                <p id="subtitle-anim" class="text-xl md:text-2xl text-gray-300 mb-8"></p>
                 <a href="#about" class="bg-white text-black font-bold py-3 px-8 rounded-full hover:bg-gray-200 transition duration-300 transform hover:scale-105">
                     Explore My Profile
                 </a>
@@ -398,7 +392,7 @@
                                 </div>
                             </div>
                             <div class="md:col-span-2 vanishing-text">
-                                <p class="text-lg text-gray-300 leading-relaxed">
+                                <p class="text-lg leading-relaxed">
                                     I am a passionate and driven statistician with a Master's degree from Banaras Hindu University and a Bachelor's from Maulana Azad College. My academic and professional journey has provided me with a robust foundation in data analysis, statistical modeling, and machine learning using tools like Python and R. I thrive on transforming complex datasets into actionable insights and am actively seeking a challenging role where I can apply my skills to solve real-world problems.
                                 </p>
                             </div>
@@ -494,7 +488,7 @@
                         <div class="timeline-content">
                             <div class="card p-1 rounded-lg">
                                 <div class="card-inner p-5">
-                                    <h3 class="text-2xl font-bold">Secondary Education</h3>
+                                    <h3 class="text-2xl font-bold">Primary and Secondary Education</h3>
                                     <p class="text-gray-400">The Scottish Church Collegiate School</p>
                                     <p class="text-sm text-purple-400">2009 - 2019</p>
                                 </div>
@@ -546,7 +540,7 @@
                                 <h3 class="text-xl font-bold mb-2">Data Science Job Simulation</h3>
                                 <p class="text-gray-400 mb-4">Commonwealth Bank</p>
                             </div>
-                            <button class="view-cert-btn mt-4 bg-purple-600/50 text-purple-200 px-4 py-2 rounded-lg w-full" data-src="https://placehold.co/800x600/0a0a0a/ffffff?text=Certificate+1">View Certificate</button>
+                            <button class="view-cert-btn mt-4 bg-purple-600/50 text-purple-200 px-4 py-2 rounded-lg w-full" data-src="https://github.com/dunaidutta007/dunaidutta007.github.io/blob/main/certificates/ds%20jobsim.pdf">View Certificate</button>
                         </div>
                     </div>
                     <!-- Certificate 2 -->
@@ -592,23 +586,16 @@
                 </div>
             </div>
         </section>
-
-        <!-- AI Assistant -->
-        <section id="ai-assistant" class="section fade-in-section">
+        
+        <!-- Resume Section -->
+        <section id="resume" class="section fade-in-section">
             <div class="container mx-auto px-4 text-center">
-                <h2 class="text-5xl font-bold mb-4 vanishing-text">Ask My AI Twin</h2>
-                <p class="text-gray-400 mb-8 max-w-2xl mx-auto vanishing-text">Have questions about my profile? Ask my AI assistant, powered by Gemini. It's trained on my resume to answer your questions.</p>
-                <div class="card p-1 rounded-lg max-w-2xl mx-auto vanishing-text">
-                    <div class="card-inner p-8 rounded-lg">
-                        <div class="space-y-4">
-                            <input type="text" id="ai-question-input" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="e.g., 'What is your experience with Python?'">
-                            <button id="ask-ai-button" class="gemini-button w-full">Ask Question</button>
-                        </div>
-                        <div id="ai-response-loader" class="loader hidden mx-auto mt-6"></div>
-                        <div id="ai-response" class="mt-6 text-left bg-gray-800/50 p-4 rounded-lg min-h-[50px]">
-                            <p class="text-gray-400">Response will appear here...</p>
-                        </div>
-                    </div>
+                <h2 class="text-5xl font-bold mb-8 vanishing-text">My Resume</h2>
+                <button id="view-resume-btn" class="bg-white text-black font-bold py-3 px-8 rounded-full hover:bg-gray-200 transition duration-300 transform hover:scale-105">
+                    View My Resume
+                </button>
+                <div id="resume-viewer" class="mt-8 w-full max-w-4xl mx-auto rounded-lg overflow-hidden">
+                    <iframe id="resume-iframe" class="w-full h-[80vh]" frameborder="0"></iframe>
                 </div>
             </div>
         </section>
@@ -637,6 +624,18 @@
             <img src="" alt="Certificate" id="modal-img" class="max-w-full max-h-full">
         </div>
     </div>
+    
+    <!-- Music Toggle -->
+    <button id="music-toggle" class="fixed bottom-6 right-6 z-50 w-12 h-12 bg-white/10 backdrop-blur-sm rounded-full text-white">
+        <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+    </button>
+
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -991,73 +990,98 @@
                     closeModal();
                 }
             });
+            
+            // --- Resume Viewer ---
+            const viewResumeBtn = document.getElementById('view-resume-btn');
+            const resumeViewer = document.getElementById('resume-viewer');
+            const resumeIframe = document.getElementById('resume-iframe');
+            // IMPORTANT: Replace this with the actual URL to your hosted PDF file
+            const resumeUrl = "https://storage.googleapis.com/gemini-prod-us-east1-9534/v1/files/Profile.pdf-e9a0f443-4f9e-4340-9a2c-9a40552b9921";
 
-
-            // --- Gemini API Integration ---
-            const profileData = {
-                name: "Saptajit Dutta",
-                summary: "An aspiring Data Scientist and AI Enthusiast, currently pursuing a Master of Science in Statistics at Banaras Hindu University. Holds a BSc. in Statistics from Maulana Azad College. Has experience as a Subject Matter Expert at Chegg India and an Online Tutor.",
-                skills: "Python, R, Statistical Modeling, Data Analysis, Probability Theory, Machine Learning, C, Fortran, SQL.",
-                education: "MSc Statistics from Banaras Hindu University (2024-2026); BSc Statistics from Maulana Azad College (2021-2024); Higher Secondary (10+2) in Science from The Scottish Church Collegiate School (2019-2021); Secondary education from The Scottish Church Collegiate School (2009-2019).",
-                certifications: "Commonwealth Bank - Data Science Job Simulation, Natural Language Processing (NLP) and Text Mining Tutorial, Basics of Data Structures and Algorithms, Introduction to Artificial Intelligence, Data Analytics with Python"
-            };
-
-            const callGeminiApi = async (prompt, loader, resultElement) => {
-                loader.classList.remove('hidden');
-                resultElement.innerHTML = '';
-
-                try {
-                    const apiKey = "";
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-                    const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
-
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) throw new Error(`API Error: ${response.status}`);
-                    const result = await response.json();
-
-                    if (result.candidates && result.candidates[0].content.parts[0].text) {
-                        const text = result.candidates[0].content.parts[0].text;
-                        resultElement.innerHTML = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                    } else {
-                        resultElement.innerHTML = '<p class="text-red-400">Sorry, the AI could not generate a response. Please try again.</p>';
-                    }
-                } catch (error) {
-                    console.error("Gemini API Error:", error);
-                    resultElement.innerHTML = `<p class="text-red-400">An error occurred: ${error.message}</p>`;
-                } finally {
-                    loader.classList.add('hidden');
+            viewResumeBtn.addEventListener('click', () => {
+                if (resumeIframe.src !== resumeUrl) {
+                    resumeIframe.src = resumeUrl;
                 }
-            };
+                resumeViewer.classList.toggle('visible');
+            });
+
+
+            // --- Music Toggle ---
+            const musicToggle = document.getElementById('music-toggle');
+            const playIcon = document.getElementById('play-icon');
+            const pauseIcon = document.getElementById('pause-icon');
+            let isPlaying = false;
+            let isInitialized = false;
+
+            const reverb = new Tone.Reverb({ decay: 15, wet: 0.4 }).toDestination();
+            const delay = new Tone.FeedbackDelay("8n", 0.6).connect(reverb);
+
+            const padSynth = new Tone.PolySynth(Tone.AMSynth, {
+                harmonicity: 1.5,
+                envelope: { attack: 4, decay: 0.1, sustain: 1, release: 4 },
+                modulationEnvelope: { attack: 2, decay: 0.1, sustain: 1, release: 3 }
+            }).connect(reverb);
+            padSynth.volume.value = -10; 
+
+            const arpSynth = new Tone.AMSynth({
+                 envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.1 },
+            }).connect(delay);
+            arpSynth.volume.value = -16;
+
+            const fluteSynth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "triangle" },
+                envelope: { attack: '1s', decay: 0.1, sustain: 0.4, release: '2s' }
+            }).toDestination();
+            fluteSynth.volume.value = -14; 
             
-            // AI Assistant Q&A
-            const askAiBtn = document.getElementById('ask-ai-button');
-            const aiQuestionInput = document.getElementById('ai-question-input');
-            const aiResponseLoader = document.getElementById('ai-response-loader');
-            const aiResponseEl = document.getElementById('ai-response');
+            const vibrato = new Tone.Vibrato("6n", 0.2).connect(reverb);
+            fluteSynth.connect(vibrato);
+
+            const arp = new Tone.Sequence((time, note) => {
+                arpSynth.triggerAttackRelease(note, "16n", time);
+            }, ["A3", "C4", "E4", "G4", "A4", "C5", "E5"], "16n").start(0);
+
+            const padLoop = new Tone.Loop(time => {
+                padSynth.triggerAttackRelease(["A1", "E2"], "1m", time);
+            }, "1m").start(0);
             
-            const askAI = () => {
-                const question = aiQuestionInput.value;
-                if (!question.trim()) {
-                    aiResponseEl.innerHTML = '<p class="text-yellow-400">Please enter a question.</p>';
+            const fluteLoop = new Tone.Sequence((time, note) => {
+                fluteSynth.triggerAttackRelease(note, "1m", time);
+            }, ["A4", null, "G4", null, "E4", null, null, null], "1m").start(0);
+            
+            Tone.Transport.bpm.value = 80;
+
+            async function startMusic() {
+                if (isInitialized) return;
+                await Tone.start();
+                Tone.Transport.start();
+                isInitialized = true;
+                isPlaying = true;
+                playIcon.classList.add('hidden');
+                pauseIcon.classList.remove('hidden');
+            }
+
+            document.body.addEventListener('click', startMusic, { once: true });
+
+            musicToggle.addEventListener('click', () => {
+                if (!isInitialized) {
+                    startMusic();
                     return;
                 }
-                const prompt = `You are an AI assistant for Saptajit Dutta, an aspiring data scientist. Your name is 'SD-AI'. Answer the following question based ONLY on this information: ${JSON.stringify(profileData)}. Be professional, concise, and helpful. If the question is off-topic or cannot be answered with the provided data, politely decline. Question: "${question}"`;
-                callGeminiApi(prompt, aiResponseLoader, aiResponseEl);
-            };
 
-            askAiBtn.addEventListener('click', askAI);
-            aiQuestionInput.addEventListener('keyup', (event) => {
-                if (event.key === 'Enter') {
-                    askAI();
+                if (isPlaying) {
+                    Tone.Transport.pause();
+                    isPlaying = false;
+                    playIcon.classList.remove('hidden');
+                    pauseIcon.classList.add('hidden');
+                } else {
+                    Tone.Transport.start();
+                    isPlaying = true;
+                    playIcon.classList.add('hidden');
+                    pauseIcon.classList.remove('hidden');
                 }
             });
         });
     </script>
 </body>
 </html>
-
