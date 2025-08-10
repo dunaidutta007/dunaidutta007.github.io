@@ -273,7 +273,7 @@
             opacity: 0;
             transition: opacity 1.5s ease-in-out;
         }
-        #certificate-modal {
+        #certificate-modal, #resume-modal {
             position: fixed;
             top: 0;
             left: 0;
@@ -288,13 +288,19 @@
             pointer-events: none;
             transition: opacity 0.3s ease;
         }
-        #certificate-modal.visible {
+        #certificate-modal.visible, #resume-modal.visible {
             opacity: 1;
             pointer-events: all;
         }
-        #certificate-modal-content {
+        #certificate-modal-content, #resume-modal-content {
             max-width: 90vw;
             max-height: 90vh;
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+        #certificate-modal.visible #certificate-modal-content,
+        #resume-modal.visible #resume-modal-content {
+            transform: scale(1);
         }
         #modal-close-btn {
             position: absolute;
@@ -317,13 +323,37 @@
             align-items: center;
             justify-content: center;
         }
-        #resume-viewer {
-            max-height: 0;
+        .skills-ticker {
+            width: 100%;
             overflow: hidden;
-            transition: max-height 0.7s ease-in-out;
+            -webkit-mask-image: linear-gradient(to right, transparent, white 20%, white 80%, transparent);
+            mask-image: linear-gradient(to right, transparent, white 20%, white 80%, transparent);
         }
-        #resume-viewer.visible {
-            max-height: 100vh; /* A large enough value */
+        .skills-track {
+            display: flex;
+            width: max-content;
+        }
+        .skills-track.reverse {
+            animation-direction: reverse;
+        }
+        .skill-tile {
+            background-color: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(5px);
+            border-radius: 9999px;
+            padding: 0.5rem 1.5rem;
+            margin: 0 0.5rem;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Lato', sans-serif;
+        }
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+            animation: marquee 60s linear infinite;
         }
     </style>
 </head>
@@ -332,14 +362,16 @@
     <div id="custom-cursor"></div>
     <canvas id="bg-canvas"></canvas>
     <div id="vector-field"></div>
+    <audio id="background-music" loop></audio>
 
 
     <!-- Header -->
     <header class="fixed top-0 left-0 right-0 z-50 p-4 bg-black/30 backdrop-blur-md">
         <nav class="container mx-auto flex justify-between items-center">
             <a href="#home" class="text-3xl font-bold tracking-tighter">
-                <svg class="w-10 h-10 text-white" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z"/>
+                <svg class="w-10 h-10 text-white" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M30 80 C 80 80, 80 20, 30 20" stroke="white" stroke-width="8" fill="none" stroke-linecap="round"/>
+                    <path d="M70 20 C 40 20, 40 80, 70 80" stroke="white" stroke-width="8" fill="none" stroke-linecap="round"/>
                 </svg>
             </a>
             <div class="hidden md:flex items-center space-x-2 nav-container">
@@ -349,7 +381,6 @@
                 <a href="#education" class="nav-link">Education</a>
                 <a href="#skills" class="nav-link">Skills</a>
                 <a href="#certifications" class="nav-link">Certifications</a>
-                <a href="#resume" class="nav-link">Resume</a>
                 <a href="#contact" class="nav-link">Contact</a>
             </div>
             <button id="mobile-menu-button" class="md:hidden text-white focus:outline-none">
@@ -362,7 +393,6 @@
              <a href="#education" class="block py-2 px-4 text-sm hover:bg-gray-800 rounded">Education</a>
              <a href="#skills" class="block py-2 px-4 text-sm hover:bg-gray-800 rounded">Skills</a>
              <a href="#certifications" class="block py-2 px-4 text-sm hover:bg-gray-800 rounded">Certifications</a>
-             <a href="#resume" class="block py-2 px-4 text-sm hover:bg-gray-800 rounded">Resume</a>
              <a href="#contact" class="block py-2 px-4 text-sm hover:bg-gray-800 rounded">Contact</a>
         </div>
     </header>
@@ -383,23 +413,141 @@
         <section id="about" class="section fade-in-section">
             <div class="container mx-auto px-4">
                 <h2 class="text-5xl font-bold text-center mb-16 vanishing-text">About Me</h2>
-                <div class="card p-1 rounded-lg max-w-5xl mx-auto">
-                    <div class="card-inner p-6 md:p-10 rounded-lg">
-                        <div class="grid md:grid-cols-3 gap-8 items-center">
-                            <div class="md:col-span-1 flex justify-center">
-                                <div class="w-48 h-48 rounded-full bg-gray-800 border-2 border-purple-400 flex items-center justify-center">
-                                    <img src="https://github.com/dunaidutta007/dunaidutta007.github.io/blob/main/IMG_7002.JPG?raw=true" alt="Saptajit Dutta Profile Picture" class="rounded-full w-full h-full object-cover" id="profile-pic">
+                <div class="max-w-5xl mx-auto">
+                    <div class="p-0 md:p-0 rounded-lg" style="background: none; box-shadow: none;"></div>
+                        <div class="flex flex-col items-center justify-center relative">
+                            <!-- 3D Globe + Profile Pic + Texts Wrap Around -->
+                            <div class="relative flex flex-col md:flex-row items-center justify-center w-full" style="min-height:420px;">
+                                <!-- Left text -->
+                                <div class="flex-1 flex flex-col justify-center items-end pr-4 md:pr-8 self-stretch">
+                                    <div class="flex flex-col justify-center h-full w-full max-w-xs bg-transparent shadow-none">
+                                        <p class="text-lg leading-relaxed mb-4 vanishing-text text-right bg-transparent shadow-none">
+                                            I am a passionate and driven statistician with a Master's degree from Banaras Hindu University and a Bachelor's from Maulana Azad College.
+                                        </p>
+                                        <p class="text-lg leading-relaxed mb-4 vanishing-text text-right bg-transparent shadow-none"></p>
+                                            My academic and professional journey has provided me with a robust foundation in data analysis, statistical modeling, and machine learning using tools like Python and R.
+                                        </p>
+                                    </div>
+                                </div>
+                                <!-- Globe + Profile Pic -->
+                                <div class="relative flex flex-col items-center justify-center z-10 mx-0 md:mx-8" style="min-width:340px;">
+                                    <div class="relative w-[340px] h-[340px] md:w-[400px] md:h-[400px] flex items-center justify-center">
+                                        <canvas id="about-globe" width="400" height="400" class="w-full h-full"></canvas>
+                                        <img src="https://github.com/dunaidutta007/dunaidutta007.github.io/blob/main/IMG_7002.JPG?raw=true" alt="Saptajit Dutta Profile Picture" class="rounded-full w-28 h-28 object-cover border-4 border-purple-400 absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 shadow-lg" id="profile-pic" style="z-index:2;">
+                                    </div>
+                                </div>
+                                <!-- Right text -->
+                                <div class="flex-1 flex flex-col justify-center items-start pl-4 md:pl-8 self-stretch">
+                                    <div class="flex flex-col justify-center h-full w-full max-w-xs bg-transparent shadow-none">
+                                        <p class="text-lg leading-relaxed mb-4 vanishing-text text-left bg-transparent shadow-none">
+                                            I thrive on transforming complex datasets into actionable insights and am actively seeking a challenging role where I can apply my skills to solve real-world problems.
+                                        </p>
+                                        <p class="text-lg leading-relaxed mb-4 vanishing-text text-left bg-transparent shadow-none"></p>
+                                            Let's connect and explore how I can contribute to your team!
+                                        </p>
+                                        <button id="view-resume-btn" class="mt-6 bg-purple-600/50 text-purple-200 px-6 py-2 rounded-lg">View Resume</button>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="md:col-span-2 vanishing-text">
-                                <p class="text-lg leading-relaxed">
+                            <!-- Mobile: Texts below -->
+                            <!-- <div class="block md:hidden mt-8 text-center">
+                                <p class="text-lg leading-relaxed mb-4 vanishing-text">
                                     I am a passionate and driven statistician with a Master's degree from Banaras Hindu University and a Bachelor's from Maulana Azad College. My academic and professional journey has provided me with a robust foundation in data analysis, statistical modeling, and machine learning using tools like Python and R. I thrive on transforming complex datasets into actionable insights and am actively seeking a challenging role where I can apply my skills to solve real-world problems.
                                 </p>
-                            </div>
+                                <button id="view-resume-btn-mobile" class="mt-6 bg-purple-600/50 text-purple-200 px-6 py-2 rounded-lg">View Resume</button>
+                            </div> -->
                         </div>
                     </div>
                 </div>
             </div>
+            <script>
+            // 3D Globe using Three.js
+            (function() {
+                if (window.THREE && document.getElementById('about-globe')) {
+                    const canvas = document.getElementById('about-globe');
+                    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+                    renderer.setClearColor(0x000000, 0);
+                    renderer.setSize(canvas.width, canvas.height, false);
+
+                    const scene = new THREE.Scene();
+                    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+                    camera.position.z = 3.2;
+
+                    // Sphere geometry (large)
+                    const geometry = new THREE.SphereGeometry(1, 96, 96);
+
+                    // Simple globe material (gradient + wireframe)
+                    const material = new THREE.MeshPhysicalMaterial({
+                        color: 0x7c3aed,
+                        metalness: 0.5,
+                        roughness: 0.2,
+                        transmission: 0.7,
+                        thickness: 1,
+                        clearcoat: 1,
+                        clearcoatRoughness: 0.1,
+                        opacity: 0.85,
+                        transparent: true,
+                        side: THREE.DoubleSide
+                    });
+
+                    const globe = new THREE.Mesh(geometry, material);
+
+                    // Wireframe overlay
+                    const wireframe = new THREE.Mesh(
+                        geometry,
+                        new THREE.MeshBasicMaterial({
+                            color: 0xffffff,
+                            wireframe: true,
+                            opacity: 0.18,
+                            transparent: true
+                        })
+                    );
+
+                    // Add a subtle point light
+                    const light = new THREE.PointLight(0xc4b5fd, 1.2, 10);
+                    light.position.set(2, 2, 3);
+                    scene.add(light);
+
+                    // Add ambient light for soft illumination
+                    scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+
+                    // Group for rotation
+                    const group = new THREE.Group();
+                    group.add(globe);
+                    group.add(wireframe);
+                    scene.add(group);
+
+                    // Animate rotation
+                    function animate() {
+                        group.rotation.y += 0.007;
+                        group.rotation.x = Math.sin(Date.now() * 0.0002) * 0.08;
+                        renderer.render(scene, camera);
+                        requestAnimationFrame(animate);
+                    }
+                    animate();
+
+                    // Responsive resize
+                    function resizeGlobe() {
+                        const size = Math.min(canvas.parentElement.offsetWidth, canvas.parentElement.offsetHeight, 400);
+                        renderer.setSize(size, size, false);
+                        camera.aspect = 1;
+                        camera.updateProjectionMatrix();
+                    }
+                    window.addEventListener('resize', resizeGlobe);
+                    setTimeout(resizeGlobe, 100);
+                }
+            })();
+            // Mobile resume button triggers same modal
+            document.addEventListener('DOMContentLoaded', function() {
+                var btn = document.getElementById('view-resume-btn-mobile');
+                if (btn) {
+                    btn.addEventListener('click', function() {
+                        var modal = document.getElementById('resume-modal');
+                        if (modal) modal.classList.add('visible');
+                    });
+                }
+            });
+            </script>
         </section>
 
         <!-- Experience -->
@@ -503,27 +651,13 @@
         <section id="skills" class="section fade-in-section">
             <div class="container mx-auto px-4 text-center">
                 <h2 class="text-5xl font-bold mb-12 vanishing-text">Technical Skills</h2>
-                <div id="skills-list" class="max-w-4xl mx-auto flex flex-wrap justify-center gap-4 vanishing-text">
-                    <span class="bg-gray-800 text-white px-4 py-2 rounded-md text-lg transition-transform transform hover:scale-110 flex items-center gap-2">
-                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M16.273 8.333c-1.22-.02-2.81.52-3.93 1.25l-.29.18-1.3-1.3c.32-.23.66-.44.99-.63.63-.37 1.29-.7 2.01-.93.7-.23 1.44-.36 2.18-.36h.25v3.16l-.01-.37zm-8.946 7.334c1.22.02 2.81-.52 3.93-1.25l.29-.18 1.3 1.3c-.32.23-.66.44-.99.63-.63.37-1.29.7-2.01.93-.7.23-1.44.36-2.18.36h-.25v-3.16l.01.37zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm.667 15.313c-1.32.81-2.81 1.26-4.25 1.26-1.29 0-2.5-.39-3.56-1.12.27.03.55.05.82.05.78 0 1.58-.19 2.31-.56.79-.39 1.49-.93 2.06-1.59.57-.66 1.02-1.43 1.33-2.29.3-.85.45-1.76.45-2.71s-.15-1.86-.45-2.71c-.3-.86-.76-1.63-1.33-2.29-.57-.66-1.27-1.2-2.06-1.59-.73-.37-1.53-.56-2.31-.56-.27 0-.55.02-.82.05 1.06-.73 2.27-1.12 3.56-1.12 1.44 0 2.93.45 4.25 1.26.55.33.91.73 1.36 1.36.44.62.67 1.36.67 2.16s-.23 1.54-.67 2.16c-.45.63-.81 1.03-1.36 1.36z"/></svg>
-                        Python
-                    </span>
-                    <span class="bg-gray-800 text-white px-4 py-2 rounded-md text-lg transition-transform transform hover:scale-110 flex items-center gap-2">
-                         <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm0 1.5C7.306 3.5 3.5 7.306 3.5 12c0 4.694 3.806 8.5 8.5 8.5s8.5-3.806 8.5-8.5c0-4.694-3.806-8.5-8.5-8.5zm4.838 5.474c.23.13.396.34.48.595.085.254.085.52-.001.774-.086.254-.256.46-.486.602-.23.142-.5.195-.77.155-.66.69-1.42 1.25-2.25 1.66-.4.19-.82.34-1.25.44-.43.1-.87.16-1.32.16-.45 0-.89-.05-1.32-.16-.43-.1-.85-.25-1.25-.44-.83-.4-1.59-.97-2.25-1.66-.27.04-.54-.013-.77-.155-.23-.142-.4-.348-.486-.602-.086-.254-.085-.52.001-.774.084-.255.25-.465.48-.595.66-.69 1.42-1.25 2.25-1.66.4-.19.82-.34 1.25-.44.43-.1.87-.16 1.32-.16.45 0 .89.05 1.32.16.43.1.85.25 1.25.44.83.4 1.59.97 2.25 1.66z"/></svg>
-                        R
-                    </span>
-                    <span class="bg-gray-800 text-white px-4 py-2 rounded-md text-lg transition-transform transform hover:scale-110 flex items-center gap-2">
-                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14H7v-4h3v4zm0-6H7V7h3v4zm6 6h-3v-4h3v4zm0-6h-3V7h3v4z"/></svg>
-                        SQL
-                    </span>
-                    <span class="bg-gray-800 text-white px-4 py-2 rounded-md text-lg transition-transform transform hover:scale-110 flex items-center gap-2">
-                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
-                        C
-                    </span>
-                     <span class="bg-gray-800 text-white px-4 py-2 rounded-md text-lg transition-transform transform hover:scale-110 flex items-center gap-2">
-                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M20 18l2-2-2-2m-6 4l2-2-2-2m-6 4l2-2-2-2M4 6l2 2-2 2m14-4l-2 2 2 2m-6-4l-2 2 2 2m-6-4l-2 2 2 2"/></svg>
-                        Fortran
-                    </span>
+                <div class="skills-ticker space-y-4">
+                    <div id="skills-track-1" class="skills-track animate-marquee">
+                        <!-- Skills will be injected here by JS -->
+                    </div>
+                    <div id="skills-track-2" class="skills-track animate-marquee reverse">
+                        <!-- Skills will be injected here by JS -->
+                    </div>
                 </div>
             </div>
         </section>
@@ -533,7 +667,7 @@
             <div class="container mx-auto px-4">
                 <h2 class="text-5xl font-bold text-center mb-12 vanishing-text">Certifications</h2>
                 <div class="max-w-6xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- Certificate 1 -->
+                     <!-- Certificate 1 -->
                     <div class="card p-1 rounded-lg vanishing-text">
                         <div class="card-inner p-6 rounded-lg flex flex-col justify-between h-full">
                             <div>
@@ -606,19 +740,6 @@
                 </div>
             </div>
         </section>
-        
-        <!-- Resume Section -->
-        <section id="resume" class="section fade-in-section">
-            <div class="container mx-auto px-4 text-center">
-                <h2 class="text-5xl font-bold mb-8 vanishing-text">My Resume</h2>
-                <button id="view-resume-btn" class="bg-white text-black font-bold py-3 px-8 rounded-full hover:bg-gray-200 transition duration-300 transform hover:scale-105">
-                    View My Resume
-                </button>
-                <div id="resume-viewer" class="mt-8 w-full max-w-4xl mx-auto rounded-lg overflow-hidden">
-                    <iframe id="resume-iframe" class="w-full h-[80vh]" frameborder="0"></iframe>
-                </div>
-            </div>
-        </section>
 
         <!-- Contact -->
         <section id="contact" class="section fade-in-section">
@@ -643,6 +764,52 @@
         <div id="certificate-modal-content">
             <img src="" alt="Certificate" id="modal-img" class="max-w-full max-h-full">
         </div>
+    </div>
+    
+    <!-- Resume Modal -->
+    <div id="resume-modal">
+         <button id="resume-modal-close-btn" class="fixed top-4 right-4 text-white text-4xl z-20">&times;</button>
+         <div id="resume-modal-content" class="w-full max-w-4xl h-full max-h-[85vh] bg-gray-800 rounded-lg p-2">
+            <!-- SVG Resume -->
+            <svg viewBox="0 0 595 842" class="w-full h-full bg-white text-black rounded">
+                <text x="30" y="50" font-family="Playfair Display" font-size="24" font-weight="bold">Saptajit Dutta</text>
+                <text x="30" y="70" font-family="Lato" font-size="12">Aspiring Statistician | AI Enthusiast | BSc. & MSc. in Statistics</text>
+                
+                <line x1="30" y1="90" x2="565" y2="90" stroke="#cccccc" stroke-width="1"/>
+
+                <text x="30" y="120" font-family="Playfair Display" font-size="16" font-weight="bold">Summary</text>
+                <text x="30" y="140" font-family="Lato" font-size="10">
+                    <tspan x="30" dy="0">I am currently pursuing a Bachelor of Science (Honours) in Statistics, where I have developed a strong</tspan>
+                    <tspan x="30" dy="12">foundation in data analysis, probability theory, and statistical modeling. My academic journey has equipped</tspan>
+                    <tspan x="30" dy="12">me with the skills to interpret complex data sets, apply advanced statistical techniques, and utilize various</tspan>
+                    <tspan x="30" dy="12">statistical software such as R, Python.</tspan>
+                </text>
+
+                <text x="30" y="200" font-family="Playfair Display" font-size="16" font-weight="bold">Experience</text>
+                <text x="30" y="220" font-family="Lato" font-size="10" font-weight="bold">Royal Statistical Society</text>
+                <text x="30" y="232" font-family="Lato" font-size="10">e-Student | June 2025 - Present</text>
+
+                <text x="30" y="252" font-family="Lato" font-size="10" font-weight="bold">Transtutors</text>
+                <text x="30" y="264" font-family="Lato" font-size="10">Online Tutor | December 2024 - Present</text>
+                
+                <text x="30" y="284" font-family="Lato" font-size="10" font-weight="bold">Chegg India</text>
+                <text x="30" y="296" font-family="Lato" font-size="10">Subject Matter Expert | November 2023 - Present</text>
+
+                <line x1="30" y1="320" x2="565" y2="320" stroke="#cccccc" stroke-width="1"/>
+
+                <text x="30" y="350" font-family="Playfair Display" font-size="16" font-weight="bold">Education</text>
+                <text x="30" y="370" font-family="Lato" font-size="10" font-weight="bold">Banaras Hindu University</text>
+                <text x="30" y="382" font-family="Lato" font-size="10">Master of Science - MS, Statistics (2024 - 2026)</text>
+                
+                <text x="30" y="402" font-family="Lato" font-size="10" font-weight="bold">Maulana Azad College</text>
+                <text x="30" y="414" font-family="Lato" font-size="10">BSc. (Honours), Statistics (2021 - 2024)</text>
+
+                <text x="30" y="434" font-family="Lato" font-size="10" font-weight="bold">The Scottish Church Collegiate School</text>
+                <text x="30" y="446" font-family="Lato" font-size="10">Higher Secondary (10+2), Science (2019 - 2021)</text>
+                <text x="30" y="458" font-family="Lato" font-size="10">Primary and Secondary Education (2009 - 2019)</text>
+
+            </svg>
+         </div>
     </div>
     
     <!-- Music Toggle -->
@@ -865,21 +1032,29 @@
             }
             stars.forEach(animateStar);
 
+            
 
-            // --- Three.js Galaxy Background ---
+            // --- Three.js Galaxy Background + Interactive Sphere ---
             let scene, camera, renderer;
             const starGroups = [];
             let mouseX = 0, mouseY = 0;
+
+            let sphere, sphereGroup;
+
+            // Store references to large/blinking stars
+            let blinkingStars = [];
 
             function init3D() {
                 scene = new THREE.Scene();
                 camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
                 camera.position.z = 300;
                 
-                renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), antialias: true });
+                renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), antialias: true, alpha: true });
+                renderer.setClearColor(0x000000, 1); // pure black background, fully opaque
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 renderer.setPixelRatio(window.devicePixelRatio);
 
+                // Galaxy stars (black, for subtle depth)
                 const createStars = (count, size, color, opacity) => {
                     const geometry = new THREE.BufferGeometry();
                     const positions = new Float32Array(count * 3);
@@ -901,12 +1076,119 @@
                     scene.add(points);
                 };
 
-                createStars(10000, 0.5, 0xaaaaaa, 0.5); // Fine dust
-                createStars(2000, 1.0, 0xffffff, 0.8); // Normal stars
-                createStars(500, 1.5, 0xffdcb1, 1.0); // Brighter, warmer stars
+                createStars(10000, 0.5, 0x000000, 0.5); // Fine dust (black)
+                createStars(2000, 1.0, 0x000000, 0.8); // Normal stars (black)
+                createStars(500, 1.5, 0x000000, 1.0); // Brighter, warmer stars (black)
+
+                // --- White stars (space look, mouse responsive) ---
+                const whiteStarCount = 1200;
+                const whiteStarGeometry = new THREE.BufferGeometry();
+                const whiteStarPositions = new Float32Array(whiteStarCount * 3);
+
+                for (let i = 0; i < whiteStarCount; i++) {
+                    // Spread stars in a sphere around the origin
+                    const radius = 450 + Math.random() * 350;
+                    const theta = Math.random() * 2 * Math.PI;
+                    const phi = Math.acos(2 * Math.random() - 1);
+                    whiteStarPositions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+                    whiteStarPositions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                    whiteStarPositions[i * 3 + 2] = radius * Math.cos(phi);
+                }
+                whiteStarGeometry.setAttribute('position', new THREE.BufferAttribute(whiteStarPositions, 3));
+
+                const whiteStarMaterial = new THREE.PointsMaterial({
+                    size: 1.5,
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 0.95,
+                    blending: THREE.AdditiveBlending
+                });
+
+                const whiteStars = new THREE.Points(whiteStarGeometry, whiteStarMaterial);
+                scene.add(whiteStars);
+
+                // --- Transparent Sphere (make it larger) ---
+                sphereGroup = new THREE.Group();
+                const sphereGeometry = new THREE.SphereGeometry(120, 64, 64); // Increased radius
+                const sphereMaterial = new THREE.MeshPhysicalMaterial({
+                    color: 0x9f7aea,
+                    transparent: true,
+                    opacity: 0.25,
+                    roughness: 0.1,
+                    metalness: 0.7,
+                    transmission: 0.8,
+                    thickness: 2,
+                    clearcoat: 1,
+                    clearcoatRoughness: 0.1,
+                    reflectivity: 0.8,
+                    side: THREE.DoubleSide
+                });
+                sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+
+                // Add a subtle wireframe overlay for effect
+                const wireframe = new THREE.Mesh(
+                    sphereGeometry,
+                    new THREE.MeshBasicMaterial({
+                        color: 0xffffff,
+                        wireframe: true,
+                        opacity: 0.15,
+                        transparent: true
+                    })
+                );
+                sphereGroup.add(sphere);
+                sphereGroup.add(wireframe);
+
+                // Add a soft point light inside the sphere
+                const pointLight = new THREE.PointLight(0xc4b5fd, 0.7, 300);
+                pointLight.position.set(0, 0, 0);
+                sphereGroup.add(pointLight);
+
+                sphereGroup.position.set(0, 0, 0);
+                scene.add(sphereGroup);
 
                 window.addEventListener('resize', onWindowResize, false);
                 document.addEventListener('mousemove', onMouseMove, false);
+
+                // Animate white stars with mouse movement (parallax)
+                let whiteStarTargetRotY = 0, whiteStarTargetRotX = 0;
+                function animateWhiteStars() {
+                    // Parallax effect: rotate stars based on mouse position
+                    whiteStars.rotation.y += (whiteStarTargetRotY - whiteStars.rotation.y) * 0.04;
+                    whiteStars.rotation.x += (whiteStarTargetRotX - whiteStars.rotation.x) * 0.04;
+                }
+
+                // Patch animate3D to call animateWhiteStars
+                const origAnimate3D = animate3D;
+                animate3D = function() {
+                    requestAnimationFrame(animate3D);
+                    camera.position.x += (mouseX - camera.position.x) * 0.005;
+                    camera.position.y += (-mouseY - camera.position.y) * 0.005;
+                    camera.lookAt(scene.position);
+
+                    // Galaxy rotation
+                    if (starGroups[0]) starGroups[0].rotation.y += 0.0001;
+                    if (starGroups[1]) starGroups[1].rotation.y += 0.0002;
+                    if (starGroups[2]) starGroups[2].rotation.y += 0.0003;
+
+                    // Sphere rotation responsive to mouse
+                    if (sphereGroup) {
+                        const targetRotY = (mouseX / window.innerWidth) * Math.PI * 0.5;
+                        const targetRotX = (mouseY / window.innerHeight) * Math.PI * 0.5;
+                        sphereGroup.rotation.y += (targetRotY - sphereGroup.rotation.y) * 0.08;
+                        sphereGroup.rotation.x += (targetRotX - sphereGroup.rotation.x) * 0.08;
+                    }
+
+                    animateWhiteStars();
+
+                    renderer.render(scene, camera);
+                };
+
+                // Mouse movement for white stars parallax
+                document.addEventListener('mousemove', function(event) {
+                    whiteStarTargetRotY = ((event.clientX / window.innerWidth) - 0.5) * 0.7;
+                    whiteStarTargetRotX = ((event.clientY / window.innerHeight) - 0.5) * 0.7;
+                }, false);
+
                 animate3D();
             }
 
@@ -916,9 +1198,19 @@
                 camera.position.y += (-mouseY - camera.position.y) * 0.005;
                 camera.lookAt(scene.position);
 
+                // Galaxy rotation
                 starGroups[0].rotation.y += 0.0001;
                 starGroups[1].rotation.y += 0.0002;
                 starGroups[2].rotation.y += 0.0003;
+
+                // Sphere rotation responsive to mouse
+                if (sphereGroup) {
+                    // Map mouseX/Y to rotation
+                    const targetRotY = (mouseX / window.innerWidth) * Math.PI * 0.5;
+                    const targetRotX = (mouseY / window.innerHeight) * Math.PI * 0.5;
+                    sphereGroup.rotation.y += (targetRotY - sphereGroup.rotation.y) * 0.08;
+                    sphereGroup.rotation.x += (targetRotX - sphereGroup.rotation.x) * 0.08;
+                }
 
                 renderer.render(scene, camera);
             }
@@ -930,8 +1222,8 @@
             }
 
             function onMouseMove(event) {
-                mouseX = (event.clientX - window.innerWidth / 2) / 5;
-                mouseY = (event.clientY - window.innerHeight / 2) / 5;
+                mouseX = event.clientX - window.innerWidth / 2;
+                mouseY = event.clientY - window.innerHeight / 2;
             }
 
             init3D();
@@ -1011,18 +1303,24 @@
                 }
             });
             
-            // --- Resume Viewer ---
+            // --- Resume Modal ---
+            const resumeModal = document.getElementById('resume-modal');
             const viewResumeBtn = document.getElementById('view-resume-btn');
-            const resumeViewer = document.getElementById('resume-viewer');
-            const resumeIframe = document.getElementById('resume-iframe');
-            // IMPORTANT: Replace this with the actual URL to your hosted PDF file
-            const resumeUrl = "https://drive.google.com/file/d/11ViOSA4T9T9xeIoXI_rfHKlLLtSJOUvF/view?usp=sharing";
+            const resumeCloseBtn = document.getElementById('resume-modal-close-btn');
 
             viewResumeBtn.addEventListener('click', () => {
-                if (resumeIframe.src !== resumeUrl) {
-                    resumeIframe.src = resumeUrl;
+                resumeModal.classList.add('visible');
+            });
+
+            function closeResumeModal() {
+                 resumeModal.classList.remove('visible');
+            }
+
+            resumeCloseBtn.addEventListener('click', closeResumeModal);
+            resumeModal.addEventListener('click', (e) => {
+                if (e.target === resumeModal) {
+                    closeResumeModal();
                 }
-                resumeViewer.classList.toggle('visible');
             });
 
 
@@ -1030,55 +1328,24 @@
             const musicToggle = document.getElementById('music-toggle');
             const playIcon = document.getElementById('play-icon');
             const pauseIcon = document.getElementById('pause-icon');
+            const audioPlayer = document.getElementById('background-music');
             let isPlaying = false;
             let isInitialized = false;
 
-            const reverb = new Tone.Reverb({ decay: 15, wet: 0.4 }).toDestination();
-            const delay = new Tone.FeedbackDelay("8n", 0.6).connect(reverb);
-
-            const padSynth = new Tone.PolySynth(Tone.AMSynth, {
-                harmonicity: 1.5,
-                envelope: { attack: 4, decay: 0.1, sustain: 1, release: 4 },
-                modulationEnvelope: { attack: 2, decay: 0.1, sustain: 1, release: 3 }
-            }).connect(reverb);
-            padSynth.volume.value = -10; 
-
-            const arpSynth = new Tone.AMSynth({
-                 envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.1 },
-            }).connect(delay);
-            arpSynth.volume.value = -16;
-
-            const fluteSynth = new Tone.PolySynth(Tone.Synth, {
-                oscillator: { type: "triangle" },
-                envelope: { attack: '1s', decay: 0.1, sustain: 0.4, release: '2s' }
-            }).toDestination();
-            fluteSynth.volume.value = -14; 
-            
-            const vibrato = new Tone.Vibrato("6n", 0.2).connect(reverb);
-            fluteSynth.connect(vibrato);
-
-            const arp = new Tone.Sequence((time, note) => {
-                arpSynth.triggerAttackRelease(note, "16n", time);
-            }, ["A3", "C4", "E4", "G4", "A4", "C5", "E5"], "16n").start(0);
-
-            const padLoop = new Tone.Loop(time => {
-                padSynth.triggerAttackRelease(["A1", "E2"], "1m", time);
-            }, "1m").start(0);
-            
-            const fluteLoop = new Tone.Sequence((time, note) => {
-                fluteSynth.triggerAttackRelease(note, "1m", time);
-            }, ["A4", null, "G4", null, "E4", null, null, null], "1m").start(0);
-            
-            Tone.Transport.bpm.value = 80;
+            // IMPORTANT: Paste the link to your music file here
+            audioPlayer.src = "D:\\Be Eternal\\Applications(Dev)\\Messi vs Ronaldo\\sweet-dreams-122831.mp3";
 
             async function startMusic() {
                 if (isInitialized) return;
-                await Tone.start();
-                Tone.Transport.start();
-                isInitialized = true;
-                isPlaying = true;
-                playIcon.classList.add('hidden');
-                pauseIcon.classList.remove('hidden');
+                try {
+                    await audioPlayer.play();
+                    isInitialized = true;
+                    isPlaying = true;
+                    playIcon.classList.add('hidden');
+                    pauseIcon.classList.remove('hidden');
+                } catch (err) {
+                    console.log("Audio could not play automatically, waiting for toggle click.");
+                }
             }
 
             document.body.addEventListener('click', startMusic, { once: true });
@@ -1090,24 +1357,48 @@
                 }
 
                 if (isPlaying) {
-                    Tone.Transport.pause();
+                    audioPlayer.pause();
                     isPlaying = false;
                     playIcon.classList.remove('hidden');
                     pauseIcon.classList.add('hidden');
                 } else {
-                    Tone.Transport.start();
+                    audioPlayer.play();
                     isPlaying = true;
                     playIcon.classList.add('hidden');
                     pauseIcon.classList.remove('hidden');
                 }
             });
+
+            // --- Skills Ticker ---
+            const skills = [
+                { name: 'Python', icon: '<svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M16.273 8.333c-1.22-.02-2.81.52-3.93 1.25l-.29.18-1.3-1.3c.32-.23.66-.44.99-.63.63-.37 1.29-.7 2.01-.93.7-.23 1.44-.36 2.18-.36h.25v3.16l-.01-.37zm-8.946 7.334c1.22.02 2.81-.52 3.93-1.25l.29-.18 1.3 1.3c-.32.23-.66.44-.99.63-.63.37-1.29.7-2.01.93-.7.23-1.44.36-2.18.36h-.25v-3.16l.01.37zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm.667 15.313c-1.32.81-2.81 1.26-4.25 1.26-1.29 0-2.5-.39-3.56-1.12.27.03.55.05.82.05.78 0 1.58-.19 2.31-.56.79-.39 1.49-.93 2.06-1.59.57-.66 1.02-1.43 1.33-2.29.3-.85.45-1.76.45-2.71s-.15-1.86-.45-2.71c-.3-.86-.76-1.63-1.33-2.29-.57-.66-1.27-1.2-2.06-1.59-.73-.37-1.53-.56-2.31-.56-.27 0-.55.02-.82.05 1.06-.73 2.27-1.12 3.56-1.12 1.44 0 2.93.45 4.25 1.26.55.33.91.73 1.36 1.36.44.62.67 1.36.67 2.16s-.23 1.54-.67 2.16c-.45.63-.81 1.03-1.36 1.36z"/></svg>' },
+                { name: 'R', icon: '<svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm0 1.5C7.306 3.5 3.5 7.306 3.5 12c0 4.694 3.806 8.5 8.5 8.5s8.5-3.806 8.5-8.5c0-4.694-3.806-8.5-8.5-8.5zm4.838 5.474c.23.13.396.34.48.595.085.254.085.52-.001.774-.086.254-.256.46-.486.602-.23.142-.5.195-.77.155-.66.69-1.42 1.25-2.25 1.66-.4.19-.82.34-1.25.44-.43.1-.87.16-1.32.16-.45 0-.89-.05-1.32-.16-.43-.1-.85-.25-1.25-.44-.83-.4-1.59-.97-2.25-1.66-.27.04-.54-.013-.77-.155-.23-.142-.4-.348-.486-.602-.086-.254-.085-.52.001-.774.084-.255.25-.465.48-.595.66-.69 1.42-1.25 2.25-1.66.4-.19.82-.34 1.25-.44.43-.1.87-.16 1.32-.16.45 0 .89.05 1.32.16.43.1.85.25 1.25.44.83.4 1.59.97 2.25 1.66z"/></svg>' },
+                { name: 'SQL', icon: '<svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14H7v-4h3v4zm0-6H7V7h3v4zm6 6h-3v-4h3v4zm0-6h-3V7h3v4z"/></svg>' },
+                { name: 'C', icon: '<svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>' },
+                { name: 'Fortran', icon: '<svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M20 18l2-2-2-2m-6 4l2-2-2-2m-6 4l2-2-2-2M4 6l2 2-2 2m14-4l-2 2 2 2m-6-4l-2 2 2 2m-6-4l-2 2 2 2"/></svg>' },
+                { name: 'Statistical Modeling', icon: '<svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z"/></svg>'},
+                { name: 'Data Analysis', icon: '<svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M21.21 15.89A10 10 0 1 1 8 2.83M22 12A10 10 0 0 0 12 2v10z"/></svg>'},
+                { name: 'Probability Theory', icon: '<svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l-2 4h4l-2-4zm-7.07 2.93l2.83 2.83m11.31 0l-2.83 2.83M2 12l4 2v-4l-4 2zm20 0l-4 2v-4l4 2zm-7.07 7.07l2.83-2.83m-11.31 0l-2.83-2.83M12 22l2-4h-4l2 4z"/></svg>'},
+            ];
+
+            const skillsTrack1 = document.getElementById('skills-track-1');
+            const skillsTrack2 = document.getElementById('skills-track-2');
+
+            const allSkills = [...skills, ...skills]; // Duplicate for seamless loop
+
+            allSkills.forEach((skill, index) => {
+                const tile = document.createElement('div');
+                tile.classList.add('skill-tile', 'text-lg');
+                tile.innerHTML = `${skill.icon} ${skill.name}`;
+                if(index < skills.length) {
+                    skillsTrack1.appendChild(tile.cloneNode(true));
+                } else {
+                     skillsTrack2.appendChild(tile.cloneNode(true));
+                }
+            });
+             skillsTrack1.innerHTML += skillsTrack1.innerHTML;
+             skillsTrack2.innerHTML += skillsTrack2.innerHTML;
         });
     </script>
 </body>
 </html>
-
-
-
-
-
-
